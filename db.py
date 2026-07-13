@@ -133,7 +133,11 @@ def get_ideas_pool() -> list[dict]:
     return []
 
 
-# ---- Run history (SQLite only, non-critical) ----
+# ---- Run history (Redis primary, SQLite fallback) ----
+RUNS_INDEX_KEY = "runs_index"
+MAX_RUNS = 100
+
+
 def _conn():
     c = sqlite3.connect(str(DB_PATH))
     c.row_factory = sqlite3.Row
@@ -169,10 +173,9 @@ def init_db():
 
 
 def save_run(run_id: str, session, mode: str = "ai_assisted"):
-    """Save a complete workflow run to the database."""
+    """Save a complete workflow run. Persists across deploys with Redis."""
     idea = session.selected_idea or {}
     idea_title = idea.get("title_cn") or idea.get("title", "")
-    total_score = idea.get("total_score", 0)
 
     def to_json(obj):
         if obj is None:
@@ -181,28 +184,65 @@ def save_run(run_id: str, session, mode: str = "ai_assisted"):
             return obj
         return json.dumps(obj, ensure_ascii=False, default=str)
 
+    now = datetime.datetime.now().isoformat()
+    meta = {
+        "id": run_id, "created_at": now, "mode": mode,
+        "idea_title": idea_title, "data_dir": getattr(session, "data_dir", "") or "",
+        "total_score": idea.get("total_score", 0) if isinstance(idea, dict) else 0,
+    }
+    data = {
+        "skill1_output": to_json(session.skill1_output),
+        "skill2_output": to_json(session.skill2_output),
+        "selected_idea": to_json(session.selected_idea),
+        "skill3_output": to_json(session.skill3_output),
+        "skill4_output": to_json(session.skill4_output),
+        "skill5_output": session.skill5_output or "",
+    }
+    full = {**meta, **data}
+
+    if _redis_ok:
+        try:
+            key = f"run:{run_id}"
+            _redis.set(key, json.dumps(full, ensure_ascii=False, default=str))
+            timestamp = int(datetime.datetime.now().timestamp() * 1000)
+            _redis.zadd(RUNS_INDEX_KEY, {run_id: timestamp})
+            # Trim old runs
+            count = _redis.zcard(RUNS_INDEX_KEY)
+            if count > MAX_RUNS:
+                _redis.zremrangebyrank(RUNS_INDEX_KEY, 0, count - MAX_RUNS - 1)
+            return
+        except Exception:
+            pass
+
+    # SQLite fallback
     with _conn() as db:
         db.execute(
             "INSERT OR REPLACE INTO runs (id, created_at, mode, idea_title, data_dir, total_score) VALUES (?, ?, ?, ?, ?, ?)",
-            (run_id, datetime.datetime.now().isoformat(), mode, idea_title, session.data_dir or "", total_score),
+            (run_id, now, mode, idea_title, getattr(session, "data_dir", "") or "", meta["total_score"]),
         )
         db.execute(
             "INSERT OR REPLACE INTO run_data (run_id, skill1_output, skill2_output, selected_idea, skill3_output, skill4_output, skill5_output) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (
-                run_id,
-                to_json(session.skill1_output),
-                to_json(session.skill2_output),
-                to_json(session.selected_idea),
-                to_json(session.skill3_output),
-                to_json(session.skill4_output),
-                session.skill5_output or "",
-            ),
+            (run_id, data["skill1_output"], data["skill2_output"], data["selected_idea"],
+             data["skill3_output"], data["skill4_output"], data["skill5_output"]),
         )
         db.commit()
 
 
 def list_runs(limit: int = 50) -> list[dict]:
     """List recent runs, newest first."""
+    if _redis_ok:
+        try:
+            ids = _redis.zrevrange(RUNS_INDEX_KEY, 0, limit - 1)
+            runs = []
+            for rid in ids:
+                raw = _redis.get(f"run:{rid.decode() if isinstance(rid, bytes) else rid}")
+                if raw:
+                    meta = json.loads(raw.decode() if isinstance(raw, bytes) else raw)
+                    runs.append({k: meta[k] for k in ("id", "created_at", "mode", "idea_title", "total_score") if k in meta})
+            return runs
+        except Exception:
+            pass
+
     with _conn() as db:
         rows = db.execute(
             "SELECT id, created_at, mode, idea_title, total_score FROM runs ORDER BY created_at DESC LIMIT ?",
@@ -213,6 +253,21 @@ def list_runs(limit: int = 50) -> list[dict]:
 
 def load_run(run_id: str) -> dict | None:
     """Load a saved run's full data."""
+    if _redis_ok:
+        try:
+            raw = _redis.get(f"run:{run_id}")
+            if raw:
+                full = json.loads(raw.decode() if isinstance(raw, bytes) else raw)
+                # Parse JSON fields back to objects
+                for key in ("skill1_output", "skill2_output", "selected_idea", "skill3_output", "skill4_output"):
+                    try:
+                        full[key] = json.loads(full.get(key, "{}"))
+                    except (json.JSONDecodeError, TypeError):
+                        full[key] = {}
+                return full
+        except Exception:
+            pass
+
     with _conn() as db:
         meta = db.execute("SELECT * FROM runs WHERE id = ?", (run_id,)).fetchone()
         if not meta:
@@ -232,6 +287,14 @@ def load_run(run_id: str) -> dict | None:
 
 def delete_run(run_id: str):
     """Delete a saved run."""
+    if _redis_ok:
+        try:
+            _redis.delete(f"run:{run_id}")
+            _redis.zrem(RUNS_INDEX_KEY, run_id)
+            return
+        except Exception:
+            pass
+
     with _conn() as db:
         db.execute("DELETE FROM run_data WHERE run_id = ?", (run_id,))
         db.execute("DELETE FROM runs WHERE id = ?", (run_id,))
