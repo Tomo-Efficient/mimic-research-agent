@@ -1,12 +1,139 @@
-"""SQLite history database for workflow runs."""
+"""
+Cache & history storage. Redis (production) with SQLite fallback (local dev).
+Set REDIS_URL env var to enable persistent Redis cache on Render.
+"""
+
 import json
+import os
 import sqlite3
 import datetime
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent / "history.db"
 
+# ---- Redis (production cache) ----
+REDIS_URL = os.environ.get("REDIS_URL")
+_redis = None
+_redis_ok = False
 
+if REDIS_URL:
+    try:
+        import redis as _redis_lib
+        _redis = _redis_lib.from_url(REDIS_URL, socket_timeout=5, socket_connect_timeout=5)
+        _redis.ping()
+        _redis_ok = True
+        print("[db] Redis connected — persistent cache enabled")
+    except Exception as e:
+        print(f"[db] Redis unavailable ({e}), using SQLite cache")
+
+
+def _cache_get(key: str) -> str | None:
+    if _redis_ok:
+        try:
+            val = _redis.get(key)
+            return val.decode() if val else None
+        except Exception:
+            pass
+    return _sqlite_kv_get(key)
+
+
+def _cache_set(key: str, value: str):
+    if _redis_ok:
+        try:
+            _redis.set(key, value)
+            return
+        except Exception:
+            pass
+    _sqlite_kv_set(key, value)
+
+
+def _cache_delete(key: str):
+    if _redis_ok:
+        try:
+            _redis.delete(key)
+            return
+        except Exception:
+            pass
+    _sqlite_kv_delete(key)
+
+
+# ---- SQLite key-value fallback ----
+def _sqlite_conn():
+    c = sqlite3.connect(str(DB_PATH))
+    c.row_factory = sqlite3.Row
+    return c
+
+
+def _ensure_kv_table():
+    with _sqlite_conn() as db:
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS kv_cache (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        """)
+        db.commit()
+
+
+def _sqlite_kv_get(key: str) -> str | None:
+    _ensure_kv_table()
+    with _sqlite_conn() as db:
+        row = db.execute("SELECT value FROM kv_cache WHERE key = ?", (key,)).fetchone()
+        return row["value"] if row else None
+
+
+def _sqlite_kv_set(key: str, value: str):
+    _ensure_kv_table()
+    with _sqlite_conn() as db:
+        db.execute("INSERT OR REPLACE INTO kv_cache (key, value) VALUES (?, ?)", (key, value))
+        db.commit()
+
+
+def _sqlite_kv_delete(key: str):
+    _ensure_kv_table()
+    with _sqlite_conn() as db:
+        db.execute("DELETE FROM kv_cache WHERE key = ?", (key,))
+        db.commit()
+
+
+# ---- Public cache API ----
+def save_eda_cache(data_dir: str, result: dict):
+    """Cache EDA result keyed by data directory path. Persists across restarts."""
+    key = f"eda:{data_dir}"
+    _cache_set(key, json.dumps(result, ensure_ascii=False, default=str))
+
+
+def get_eda_cache(data_dir: str) -> dict | None:
+    """Retrieve cached EDA result, or None."""
+    key = f"eda:{data_dir}"
+    val = _cache_get(key)
+    if val:
+        try:
+            return json.loads(val)
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return None
+
+
+def save_ideas_pool(ideas: list):
+    """Replace the entire ideas pool with a new list. Persists across restarts."""
+    _cache_set("ideas_pool", json.dumps(ideas, ensure_ascii=False, default=str))
+
+
+def get_ideas_pool() -> list[dict]:
+    """Retrieve all cached ideas."""
+    val = _cache_get("ideas_pool")
+    if val:
+        try:
+            ideas = json.loads(val)
+            if isinstance(ideas, list):
+                return ideas
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return []
+
+
+# ---- Run history (SQLite only, non-critical) ----
 def _conn():
     c = sqlite3.connect(str(DB_PATH))
     c.row_factory = sqlite3.Row
@@ -109,59 +236,6 @@ def delete_run(run_id: str):
         db.execute("DELETE FROM run_data WHERE run_id = ?", (run_id,))
         db.execute("DELETE FROM runs WHERE id = ?", (run_id,))
         db.commit()
-
-
-def save_eda_cache(data_dir: str, result: dict):
-    """Cache EDA result keyed by data directory path."""
-    with _conn() as db:
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS eda_cache (
-                data_dir TEXT PRIMARY KEY,
-                result TEXT NOT NULL
-            )
-        """)
-        db.execute(
-            "INSERT OR REPLACE INTO eda_cache (data_dir, result) VALUES (?, ?)",
-            (data_dir, json.dumps(result, ensure_ascii=False, default=str)),
-        )
-        db.commit()
-
-
-def get_eda_cache(data_dir: str) -> dict | None:
-    """Retrieve cached EDA result, or None."""
-    with _conn() as db:
-        db.execute("CREATE TABLE IF NOT EXISTS eda_cache (data_dir TEXT PRIMARY KEY, result TEXT NOT NULL)")
-        row = db.execute("SELECT result FROM eda_cache WHERE data_dir = ?", (data_dir,)).fetchone()
-        if row:
-            try:
-                return json.loads(row["result"])
-            except (json.JSONDecodeError, TypeError):
-                return None
-    return None
-
-
-def save_ideas_pool(ideas: list):
-    """Replace the entire ideas pool with a new list."""
-    with _conn() as db:
-        db.execute("CREATE TABLE IF NOT EXISTS ideas_pool (id INTEGER PRIMARY KEY AUTOINCREMENT, idea_json TEXT NOT NULL)")
-        db.execute("DELETE FROM ideas_pool")
-        for idea in ideas:
-            db.execute("INSERT INTO ideas_pool (idea_json) VALUES (?)", (json.dumps(idea, ensure_ascii=False, default=str),))
-        db.commit()
-
-
-def get_ideas_pool() -> list[dict]:
-    """Retrieve all cached ideas."""
-    with _conn() as db:
-        db.execute("CREATE TABLE IF NOT EXISTS ideas_pool (id INTEGER PRIMARY KEY AUTOINCREMENT, idea_json TEXT NOT NULL)")
-        rows = db.execute("SELECT idea_json FROM ideas_pool ORDER BY id").fetchall()
-        ideas = []
-        for row in rows:
-            try:
-                ideas.append(json.loads(row["idea_json"]))
-            except (json.JSONDecodeError, TypeError):
-                pass
-        return ideas
 
 
 # Initialize on import
