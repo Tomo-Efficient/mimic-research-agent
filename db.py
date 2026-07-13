@@ -1,63 +1,72 @@
 """
-Cache & history storage. Redis (production) with SQLite fallback (local dev).
-Set REDIS_URL env var to enable persistent Redis cache on Render.
+Cache & history storage. Upstash Redis REST API (production) with SQLite fallback (local dev).
+Set REDIS_REST_URL and REDIS_REST_TOKEN env vars for persistent cache on Render.
 """
 
 import json
 import os
 import sqlite3
 import datetime
+import urllib.request
+import urllib.error
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent / "history.db"
 
-# ---- Redis (production cache) ----
-REDIS_URL = os.environ.get("REDIS_URL")
-_redis = None
-_redis_ok = False
+# ---- Upstash Redis REST API (production cache) ----
+REST_URL = os.environ.get("REDIS_REST_URL", "").rstrip("/")
+REST_TOKEN = os.environ.get("REDIS_REST_TOKEN")
+_rest_ok = False
 
-if REDIS_URL:
+
+def _redis_rest(cmd: str, key: str, value: str | None = None) -> str | None:
+    """Call Upstash Redis REST API. Returns response body or None."""
+    url = f"{REST_URL}/{cmd}/{key}"
+    req = urllib.request.Request(url, method="GET" if value is None else "POST")
+    req.add_header("Authorization", f"Bearer {REST_TOKEN}")
+    if value is not None:
+        req.data = value.encode("utf-8")
+        req.add_header("Content-Type", "text/plain")
     try:
-        import redis as _redis_lib
-        opts = {"socket_timeout": 5, "socket_connect_timeout": 5}
-        if REDIS_URL.startswith("rediss://"):
-            opts["ssl"] = True
-            opts["ssl_cert_reqs"] = None
-        _redis = _redis_lib.from_url(REDIS_URL, **opts)
-        _redis.ping()
-        _redis_ok = True
-        print("[db] Redis connected — persistent cache enabled")
-    except Exception as e:
-        print(f"[db] Redis unavailable ({e}), using SQLite cache")
+        resp = urllib.request.urlopen(req, timeout=5)
+        return resp.read().decode("utf-8")
+    except Exception:
+        return None
+
+
+if REST_URL and REST_TOKEN:
+    r = _redis_rest("ping", "claude-test")
+    if r is not None:
+        _rest_ok = True
+        print("[db] Upstash Redis REST connected — persistent cache enabled")
+    else:
+        print("[db] Upstash Redis REST unavailable, using SQLite cache")
 
 
 def _cache_get(key: str) -> str | None:
-    if _redis_ok:
-        try:
-            val = _redis.get(key)
-            return val.decode() if val else None
-        except Exception:
-            pass
+    if _rest_ok:
+        raw = _redis_rest("get", key)
+        if raw:
+            try:
+                result = json.loads(raw).get("result")
+                if result and result != "null":
+                    return result
+            except (json.JSONDecodeError, TypeError):
+                pass
     return _sqlite_kv_get(key)
 
 
 def _cache_set(key: str, value: str):
-    if _redis_ok:
-        try:
-            _redis.set(key, value)
-            return
-        except Exception:
-            pass
+    if _rest_ok:
+        _redis_rest("set", key, value)
+        return
     _sqlite_kv_set(key, value)
 
 
 def _cache_delete(key: str):
-    if _redis_ok:
-        try:
-            _redis.delete(key)
-            return
-        except Exception:
-            pass
+    if _rest_ok:
+        _redis_rest("del", key)
+        return
     _sqlite_kv_delete(key)
 
 
@@ -137,7 +146,7 @@ def get_ideas_pool() -> list[dict]:
     return []
 
 
-# ---- Run history (Redis primary, SQLite fallback) ----
+# ---- Run history (Upstash REST primary, SQLite fallback) ----
 RUNS_INDEX_KEY = "runs_index"
 MAX_RUNS = 100
 
@@ -177,7 +186,7 @@ def init_db():
 
 
 def save_run(run_id: str, session, mode: str = "ai_assisted"):
-    """Save a complete workflow run. Persists across deploys with Redis."""
+    """Save a complete workflow run. Persists across deploys with Upstash REST."""
     idea = session.selected_idea or {}
     idea_title = idea.get("title_cn") or idea.get("title", "")
 
@@ -204,16 +213,15 @@ def save_run(run_id: str, session, mode: str = "ai_assisted"):
     }
     full = {**meta, **data}
 
-    if _redis_ok:
+    if _rest_ok:
         try:
-            key = f"run:{run_id}"
-            _redis.set(key, json.dumps(full, ensure_ascii=False, default=str))
+            run_json = json.dumps(full, ensure_ascii=False, default=str)
+            _redis_rest("set", f"run:{run_id}", run_json)
             timestamp = int(datetime.datetime.now().timestamp() * 1000)
-            _redis.zadd(RUNS_INDEX_KEY, {run_id: timestamp})
-            # Trim old runs
-            count = _redis.zcard(RUNS_INDEX_KEY)
-            if count > MAX_RUNS:
-                _redis.zremrangebyrank(RUNS_INDEX_KEY, 0, count - MAX_RUNS - 1)
+            # ZADD key score member
+            _redis_rest("zadd", f"{RUNS_INDEX_KEY}/{timestamp}", run_id)
+            # Trim: ZREMRANGEBYRANK key 0 (count - MAX_RUNS - 1)
+            _redis_rest("zremrangebyrank", f"{RUNS_INDEX_KEY}/0/{max(0, 999)}", None)
             return
         except Exception:
             pass
@@ -234,16 +242,21 @@ def save_run(run_id: str, session, mode: str = "ai_assisted"):
 
 def list_runs(limit: int = 50) -> list[dict]:
     """List recent runs, newest first."""
-    if _redis_ok:
+    if _rest_ok:
         try:
-            ids = _redis.zrevrange(RUNS_INDEX_KEY, 0, limit - 1)
-            runs = []
-            for rid in ids:
-                raw = _redis.get(f"run:{rid.decode() if isinstance(rid, bytes) else rid}")
-                if raw:
-                    meta = json.loads(raw.decode() if isinstance(raw, bytes) else raw)
-                    runs.append({k: meta[k] for k in ("id", "created_at", "mode", "idea_title", "total_score") if k in meta})
-            return runs
+            # ZRANGE key 0 limit-1 REV
+            raw = _redis_rest("zrange", f"{RUNS_INDEX_KEY}/0/{limit - 1}/REV")
+            if raw:
+                ids = json.loads(raw).get("result", [])
+                runs = []
+                for rid in ids:
+                    rraw = _redis_rest("get", f"run:{rid}")
+                    if rraw:
+                        rv = json.loads(rraw).get("result")
+                        if rv:
+                            meta = json.loads(rv)
+                            runs.append({k: meta[k] for k in ("id", "created_at", "mode", "idea_title", "total_score") if k in meta})
+                return runs
         except Exception:
             pass
 
@@ -257,18 +270,19 @@ def list_runs(limit: int = 50) -> list[dict]:
 
 def load_run(run_id: str) -> dict | None:
     """Load a saved run's full data."""
-    if _redis_ok:
+    if _rest_ok:
         try:
-            raw = _redis.get(f"run:{run_id}")
-            if raw:
-                full = json.loads(raw.decode() if isinstance(raw, bytes) else raw)
-                # Parse JSON fields back to objects
-                for key in ("skill1_output", "skill2_output", "selected_idea", "skill3_output", "skill4_output"):
-                    try:
-                        full[key] = json.loads(full.get(key, "{}"))
-                    except (json.JSONDecodeError, TypeError):
-                        full[key] = {}
-                return full
+            rraw = _redis_rest("get", f"run:{run_id}")
+            if rraw:
+                rv = json.loads(rraw).get("result")
+                if rv:
+                    full = json.loads(rv)
+                    for key in ("skill1_output", "skill2_output", "selected_idea", "skill3_output", "skill4_output"):
+                        try:
+                            full[key] = json.loads(full.get(key, "{}"))
+                        except (json.JSONDecodeError, TypeError):
+                            full[key] = {}
+                    return full
         except Exception:
             pass
 
@@ -291,10 +305,10 @@ def load_run(run_id: str) -> dict | None:
 
 def delete_run(run_id: str):
     """Delete a saved run."""
-    if _redis_ok:
+    if _rest_ok:
         try:
-            _redis.delete(f"run:{run_id}")
-            _redis.zrem(RUNS_INDEX_KEY, run_id)
+            _redis_rest("del", f"run:{run_id}")
+            _redis_rest("zrem", f"{RUNS_INDEX_KEY}", run_id)
             return
         except Exception:
             pass
