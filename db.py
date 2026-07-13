@@ -111,15 +111,14 @@ def _sqlite_kv_delete(key: str):
 
 # ---- Public cache API ----
 def save_eda_cache(data_dir: str, result: dict):
-    """Cache EDA result keyed by data directory path. Persists across restarts."""
-    key = f"eda:{data_dir}"
-    _cache_set(key, json.dumps(result, ensure_ascii=False, default=str))
+    """Cache EDA result. Key is path-independent so it works across machines."""
+    val = json.dumps(result, ensure_ascii=False, default=str)
+    _cache_set("eda_cache", val)
 
 
 def get_eda_cache(data_dir: str) -> dict | None:
     """Retrieve cached EDA result, or None."""
-    key = f"eda:{data_dir}"
-    val = _cache_get(key)
+    val = _cache_get("eda_cache")
     if val:
         try:
             return json.loads(val)
