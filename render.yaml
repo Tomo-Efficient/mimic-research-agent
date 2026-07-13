@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: mimic-research-agent
+    env: python
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 300
+    envVars:
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: DATA_DIR
+        value: /opt/render/project/src/data
+      - key: SKILLS_DIR
+        value: /opt/render/project/src/skills
+    plan: free
