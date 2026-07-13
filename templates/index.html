@@ -5,530 +5,764 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RWD Research Agent</title>
 <style>
-:root{--bg:#f7f8fa;--surface:#fff;--border:#e5e7eb;--text:#1f2937;--text2:#6b7280;--text3:#9ca3af;--primary:#2563eb;--primary-light:#eff6ff;--success:#059669;--success-light:#ecfdf5;--warning:#d97706;--warning-light:#fffbeb;--danger:#dc2626;--danger-light:#fef2f2;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.06)}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; line-height: 1.6; height: 100vh; overflow: hidden; }
+.app { display: flex; flex-direction: column; height: 100vh; }
 
-.landing{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:20px;background:linear-gradient(180deg,#f0f4ff,#f7f8fa)}
-.landing h1{font-size:28px;font-weight:800;margin-bottom:8px}
-.landing p{color:var(--text2);font-size:15px;margin-bottom:24px}
-.landing-wrap{width:100%;max-width:640px;display:flex;gap:8px}
-.landing-wrap input{flex:1;padding:14px 18px;border:2px solid var(--border);border-radius:14px;font-size:15px;font-family:inherit;outline:none;transition:all .2s}
-.landing-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.landing-wrap button{padding:14px 24px;border-radius:14px;border:none;background:var(--primary);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
-.landing-wrap button:hover{background:#1d4ed8}
-.landing-wrap button:disabled{opacity:.4}
-.mode-row{display:flex;gap:8px;margin-top:12px}
-.mode-row button{padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer;font-family:inherit;color:var(--text2);transition:all .2s}
-.mode-row button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+/* Top Nav */
+.top-nav { display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 24px; height: 48px; flex-shrink: 0; }
+.nav-brand { font-weight: 700; font-size: 0.95rem; color: #0f4c81; }
+.nav-links { display: flex; gap: 4px; }
+.nav-links a { padding: 8px 20px; text-decoration: none; color: #555; font-size: 0.85rem; cursor: pointer; border-radius: 4px; transition: all 0.15s; }
+.nav-links a:hover { background: #f0f4f8; color: #333; }
+.nav-links a.active { background: #e8f0f8; color: #0f4c81; font-weight: 600; }
 
-.workspace{display:none;height:100vh;grid-template-columns:250px 1fr 6px 700px}
-.workspace.on{display:grid}
-.panel-left{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
-.panel-left h3{padding:16px;border-bottom:1px solid var(--border);font-size:14px}
-#conv-list div:hover .conv-del{display:inline!important}
-#conv-list div .conv-del:hover{background:#fee2e2;color:var(--danger)}
-.panel-center{display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
-.panel-center h3{padding:14px 20px;border-bottom:1px solid var(--border);background:var(--surface);font-size:14px;flex-shrink:0}
-.chat-area{flex:1;overflow-y:auto;padding:20px}
-.msg{margin-bottom:16px;animation:fadeIn .3s}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.msg.user .bubble{background:var(--primary-light);margin-left:auto;max-width:80%;width:fit-content}
-.msg.agent .bubble{background:var(--surface);border:1px solid var(--border);max-width:85%}
-.bubble{padding:12px 16px;border-radius:var(--radius);font-size:14px;line-height:1.6;box-shadow:var(--shadow)}
-.bubble.step{background:#f9fafb;border:1px dashed var(--border);font-size:13px;color:var(--text2)}
-.bubble.done{background:var(--success-light);border-color:#a7f3d0;font-size:13px}
-.bubble .label{font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600}
-.chat-bar{display:flex;gap:8px;padding:16px 20px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;align-items:flex-end}
-.chat-bar input{flex:1;padding:12px 16px;border:2px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;outline:none}
-.chat-bar input:focus{border-color:var(--primary)}
-.chat-bar button{padding:12px 24px;border-radius:12px;border:none;background:var(--primary);color:#fff;font-weight:600;cursor:pointer}
+/* Page Content */
+.page-content { flex: 1; overflow-y: auto; }
+.page { display: none; min-height: 100%; }
+.page.active { display: block; }
 
-.resizer{width:6px;cursor:col-resize;flex-shrink:0}
-.resizer:hover{background:var(--primary)}
+/* Home Page */
+.page-home { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; text-align: center; }
+.page-home h1 { font-size: 2.2rem; color: #0f4c81; margin-bottom: 8px; }
+.page-home .tagline { color: #888; font-size: 1rem; margin-bottom: 40px; }
+.page-home .home-btns { display: flex; gap: 20px; }
+.home-btn { padding: 16px 40px; border: 2px solid #0f4c81; border-radius: 10px; font-size: 1rem; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; }
+.home-btn.primary { background: #0f4c81; color: #fff; }
+.home-btn.primary:hover { background: #0b3a63; }
+.home-btn.secondary { background: #fff; color: #0f4c81; }
+.home-btn.secondary:hover { background: #f0f4f8; }
+.home-btn.disabled { opacity: 0.4; cursor: not-allowed; border-color: #ccc; color: #ccc; background: #f5f5f5; }
 
-.panel-right{background:var(--surface);display:flex;flex-direction:column;overflow:hidden}
-.panel-right .tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
-.panel-right .tabs button{flex:1;padding:12px 4px;border:none;background:none;font-size:11px;font-weight:600;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;font-family:inherit;transition:all .2s}
-.panel-right .tabs button:hover{color:var(--text2)}
-.panel-right .tabs button.on{color:var(--primary);border-bottom-color:var(--primary)}
-.panel-right .r-content{flex:1;overflow-y:auto;padding:20px;font-size:13px;line-height:1.7}
-.panel-right .r-content h2{font-size:16px;margin-bottom:12px}
-.panel-right .r-content h3{font-size:14px;margin:16px 0 8px}
-.panel-right .r-content table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
-.panel-right .r-content td,.panel-right .r-content th{padding:6px 10px;border-bottom:1px solid #f3f4f6;text-align:left}
-.panel-right .r-content th{background:#f9fafb;font-weight:700;font-size:11px;color:var(--text2)}
-.empty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:14px}
+/* Data Report — card grid layout */
+.data-report { max-width: 1040px; margin: 0 auto; padding: 32px 24px; }
+.dr-title { font-size: 1.5rem; color: #0f4c81; margin-bottom: 4px; }
+.dr-subtitle { color: #888; font-size: 0.85rem; margin-bottom: 28px; }
+.dr-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 32px; }
+.dr-card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #e8ecf1; text-align: center; }
+.dr-card .dr-card-num { font-size: 2rem; font-weight: 700; color: #0f4c81; line-height: 1.2; }
+.dr-card .dr-card-label { font-size: 0.78rem; color: #888; margin-top: 4px; }
+.dr-section { margin-bottom: 28px; }
+.dr-section h3 { font-size: 1.05rem; color: #333; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
+.dr-table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.dr-table-card { background: #fff; border: 1px solid #e8ecf1; border-radius: 8px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+.dr-table-card .dr-tc-icon { width: 40px; height: 40px; border-radius: 8px; background: #e8f0f8; color: #0f4c81; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; flex-shrink: 0; }
+.dr-table-card .dr-tc-info { flex: 1; min-width: 0; }
+.dr-table-card .dr-tc-name { font-weight: 600; font-size: 0.85rem; }
+.dr-table-card .dr-tc-en { color: #888; font-size: 0.72rem; }
+.dr-table-card .dr-tc-size { color: #aaa; font-size: 0.7rem; margin-top: 2px; }
+.dr-rel-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.dr-rel-item { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 14px; font-size: 0.82rem; display: flex; align-items: center; gap: 6px; }
+.dr-rel-arrow { color: #0f4c81; font-weight: 700; }
+.dr-var-table { width: 100%; border-collapse: collapse; }
+.dr-var-table th { background: #f4f6f8; font-weight: 600; text-align: left; padding: 8px 12px; border: 1px solid #e5e7eb; font-size: 0.8rem; color: #555; }
+.dr-var-table td { padding: 8px 12px; border: 1px solid #e5e7eb; font-size: 0.82rem; }
+.dr-var-table tr:nth-child(even) td { background: #fafbfc; }
+.dr-quality { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 0.72rem; font-weight: 600; }
+.dr-quality.good { background: #d4edda; color: #155724; }
+.dr-quality.warn { background: #fff3cd; color: #856404; }
+.dr-quality.bad { background: #f8d7da; color: #721c24; }
+.dr-narrative { background: #f8fafc; border-left: 4px solid #0f4c81; border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 12px; font-size: 0.85rem; line-height: 1.8; color: #333; }
+.dr-narrative.en { border-left-color: #888; background: #fafafa; color: #555; font-size: 0.8rem; }
+.en-name { color: #888; font-size: 0.75rem; font-weight: 400; }
 
-.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.hint{text-align:center;margin:12px 0;font-size:13px;color:var(--text2);padding:10px;background:var(--primary-light);border-radius:8px}
+/* Ideas Page */
+.ideas-page { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+.ideas-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.ideas-header h2 { font-size: 1.2rem; color: #0f4c81; }
+.ideas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; }
+.idea-card-lg { border: 1px solid #e0e5ec; border-radius: 8px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; background: #fff; }
+.idea-card-lg:hover { border-color: #0f4c81; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.idea-card-lg.selected { border-color: #2ecc71; background: #f0fdf4; border-width: 2px; }
+.idea-card-lg .ic-id { font-weight: 700; color: #0f4c81; font-size: 0.75rem; margin-bottom: 2px; }
+.idea-card-lg .ic-title { font-weight: 600; font-size: 0.88rem; margin-bottom: 4px; }
+.idea-card-lg .ic-title-en { color: #777; font-size: 0.76rem; margin-bottom: 6px; }
+.idea-card-lg .ic-hyp { color: #555; font-size: 0.78rem; margin-bottom: 4px; }
+.idea-card-lg .ic-meta { display: flex; gap: 16px; color: #999; font-size: 0.7rem; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; }
+.btn-primary { padding: 8px 20px; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 500; background: #0f4c81; color: #fff; }
+.btn-primary:hover { background: #0b3a63; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-secondary { padding: 8px 20px; border: 1px solid #d0d5dd; border-radius: 6px; font-size: 0.85rem; cursor: pointer; background: #fff; color: #555; }
+.btn-secondary:hover { background: #f5f7fa; }
+.spinner { display: none; width: 16px; height: 16px; border: 2px solid #e0e5ec; border-top-color: #f39c12; border-radius: 50%; animation: spin 0.6s linear infinite; }
+.spinner.visible { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-msg { background: #fef0f0; border: 1px solid #f5c6cb; color: #721c24; padding: 8px 12px; border-radius: 5px; font-size: 0.78rem; display: none; margin-top: 8px; }
+.error-msg.visible { display: block; }
 
-@media(max-width:1000px){.workspace{grid-template-columns:1fr!important}.panel-left,.panel-right,.resizer{display:none}}
+/* Workspace (Steps 3-5: full-screen) */
+.page-workspace-full { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; background: #f0f2f5; }
+.workspace { display: grid; grid-template-columns: 220px 1fr 6px 800px; height: 100%; }
+.panel-left { background: #fff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; }
+.panel-left h3 { padding: 14px 16px; border-bottom: 1px solid #e5e7eb; font-size: 13px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.panel-left h3 button { background: none; border: none; cursor: pointer; font-size: 20px; color: #888; padding: 0 4px; line-height: 1; }
+.panel-left h3 button:hover { color: #0f4c81; }
+.conv-list { flex: 1; overflow-y: auto; padding: 8px; }
+.conv-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center; color: #555; transition: all 0.15s; }
+.conv-item:hover { background: #f0f4f8; }
+.conv-item.active { background: #e8f0f8; color: #0f4c81; font-weight: 600; }
+.conv-item .conv-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conv-item .conv-time { font-size: 10px; color: #aaa; }
+.conv-item .conv-del { display: none; font-size: 14px; color: #aaa; padding: 2px 6px; border-radius: 4px; cursor: pointer; }
+.conv-item:hover .conv-del { display: block; }
+.conv-item .conv-del:hover { background: #fee2e2; color: #e74c3c; }
+.panel-center { display: flex; flex-direction: column; background: #f0f2f5; overflow: hidden; }
+.panel-center h3 { padding: 12px 20px; border-bottom: 1px solid #e5e7eb; background: #fff; font-size: 14px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.panel-center h3 .back-btn { background: none; border: 1px solid #dde0e4; border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: #555; }
+.panel-center h3 .back-btn:hover { background: #f0f4f8; color: #0f4c81; }
+.chat-area { flex: 1; overflow-y: auto; padding: 20px; }
+.msg { margin-bottom: 16px; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.msg.user .bubble { background: #e8f0f8; margin-left: auto; max-width: 80%; width: fit-content; }
+.msg.agent .bubble { background: #fff; border: 1px solid #e5e7eb; max-width: 85%; }
+.bubble { padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.6; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.bubble.step { background: #f9fafb; border: 1px dashed #e5e7eb; font-size: 13px; color: #666; }
+.bubble.done { background: #ecfdf5; border-color: #a7f3d0; font-size: 13px; }
+.bubble .label { font-size: 11px; color: #888; margin-bottom: 4px; font-weight: 600; }
+.chat-bar { display: flex; gap: 8px; padding: 14px 20px; background: #fff; border-top: 1px solid #e5e7eb; flex-shrink: 0; align-items: flex-end; }
+.chat-bar input { flex: 1; padding: 10px 16px; border: 1px solid #dde0e4; border-radius: 8px; font-size: 14px; font-family: inherit; background: #f8fafb; outline: none; }
+.chat-bar input:focus { border-color: #0f4c81; background: #fff; }
+.chat-bar button { padding: 10px 24px; border-radius: 8px; border: none; background: #0f4c81; color: #fff; font-weight: 600; cursor: pointer; }
+.chat-bar button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.resizer { width: 6px; cursor: col-resize; flex-shrink: 0; }
+.resizer:hover { background: #0f4c81; }
+.panel-right { background: #fff; display: flex; flex-direction: column; overflow: hidden; border-left: 1px solid #e5e7eb; }
+.panel-right .tabs { display: flex; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+.panel-right .tabs button { flex: 1; padding: 12px 4px; border: none; background: none; font-size: 11px; font-weight: 600; cursor: pointer; color: #888; border-bottom: 2px solid transparent; font-family: inherit; transition: all 0.2s; }
+.panel-right .tabs button:hover { color: #555; }
+.panel-right .tabs button.on { color: #0f4c81; border-bottom-color: #0f4c81; }
+.panel-right .r-content { flex: 1; overflow-y: auto; padding: 20px; font-size: 13px; line-height: 1.7; }
+.panel-right .r-content h2 { font-size: 16px; margin-bottom: 12px; }
+.panel-right .r-content h3 { font-size: 14px; margin: 16px 0 8px; }
+.panel-right .r-content table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+.panel-right .r-content td, .panel-right .r-content th { padding: 6px 10px; border-bottom: 1px solid #f3f4f6; text-align: left; }
+.panel-right .r-content th { background: #f9fafb; font-weight: 700; font-size: 11px; color: #555; }
+.empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #aaa; font-size: 14px; }
+
+.hint { text-align: center; margin: 12px 0; font-size: 13px; color: #555; padding: 10px; background: #e8f0f8; border-radius: 8px; }
+.btn-danger { background: #e74c3c; color: #fff; border: none; padding: 6px 14px; border-radius: 5px; font-size: 0.78rem; cursor: pointer; }
+
+@media (max-width: 1200px) { .workspace { grid-template-columns: 1fr !important; } .panel-left, .panel-right, .resizer { display: none; } }
 </style>
 </head>
 <body>
-
-<!-- LANDING -->
-<div class="landing" id="landing">
-  <h1>RWD Research Agent</h1>
-  <p>基于真实世界数据的临床研究智能助手</p>
-  <div class="landing-wrap">
-    <input id="landing-input" placeholder="输入研究想法/AI自动探索" onkeydown="if(event.key==='Enter')send()">
-    <button id="landing-btn" onclick="send()">发送</button>
-  </div>
-  <div class="mode-row">
-    <button class="active" data-mode="ai_assisted" onclick="setMode(this)">使用平台数据</button>
-    <button data-mode="paper_reproduction" onclick="setMode(this)">上传数据</button>
-  </div>
-</div>
-
-<!-- WORKSPACE -->
-<div class="workspace" id="workspace">
-  <div class="panel-left">
-    <h3 style="display:flex;justify-content:space-between;align-items:center">对话记录 <button onclick="newConv()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text2);padding:0 4px" title="新对话">+</button></h3>
-    <div id="conv-list" style="flex:1;overflow-y:auto;padding:8px"></div>
-  </div>
-  <div class="panel-center">
-    <h3>RWD Research Agent <span style="font-size:11px;color:var(--text3);margin-left:8px" id="status">就绪</span></h3>
-    <div class="chat-area" id="chat"></div>
-    <div class="chat-bar">
-      <input id="chat-input" placeholder="输入指令继续..." onkeydown="if(event.key==='Enter')send()">
-      <button onclick="send()">发送</button>
+<div class="app">
+  <!-- Top Nav -->
+  <nav class="top-nav">
+    <div class="nav-brand">RWD Research Agent</div>
+    <div class="nav-links">
+      <a onclick="goTo('home')" data-nav="home" class="active">首页</a>
+      <a onclick="goTo('data')" data-nav="data">数据报告</a>
+      <a onclick="goTo('ideas')" data-nav="ideas">选题列表</a>
+      <a onclick="goTo('workspace')" data-nav="workspace">工作区</a>
     </div>
-  </div>
-  <div class="resizer" id="resizer"></div>
-  <div class="panel-right" id="right-panel">
-    <div class="tabs">
-      <button class="on" data-r="eda" onclick="switchTab('eda')">EDA</button>
-      <button data-r="ideas" onclick="switchTab('ideas')">选题</button>
-      <button data-r="cohort" onclick="switchTab('cohort')">队列</button>
-      <button data-r="stats" onclick="switchTab('stats')">统计</button>
-      <button data-r="manuscript" onclick="switchTab('manuscript')">报告</button>
+  </nav>
+
+  <!-- Page Content -->
+  <div class="page-content">
+    <!-- HOME -->
+    <div id="page-home" class="page active">
+      <div class="page-home">
+        <h1>RWD Research Agent</h1>
+        <p class="tagline">基于真实世界数据的临床研究智能助手</p>
+        <div class="home-btns">
+          <a class="home-btn primary" onclick="goTo('data')">使用本系统数据</a>
+          <a class="home-btn secondary disabled" title="即将开放">上传自有数据</a>
+        </div>
+      </div>
     </div>
-    <div class="r-content" id="r-content"><div class="empty">报告将在此处展示</div></div>
+
+    <!-- DATA REPORT (Skill 1: EDA) -->
+    <div id="page-data" class="page">
+      <div class="data-report" id="data-report-content">
+        <div class="report-placeholder">正在加载数据报告...</div>
+      </div>
+    </div>
+
+    <!-- IDEAS LIST (Skill 2: Ideas) -->
+    <div id="page-ideas" class="page">
+      <div class="ideas-page">
+        <div class="ideas-header">
+          <h2>研究选题库</h2>
+          <div class="ideas-actions">
+            <span id="ideas-selected-label" style="color:#888;font-size:0.82rem;display:none;"></span>
+            <button class="btn-primary" onclick="goToWorkspace()" id="btn-to-workspace" disabled>前往工作区</button>
+            <button class="btn-secondary" onclick="regenerateIdeas()" id="btn-regen">重新生成选题</button>
+            <span class="spinner" id="ideas-spinner"></span>
+          </div>
+        </div>
+        <div class="error-msg" id="ideas-error"></div>
+        <div class="ideas-grid" id="ideas-grid"></div>
+      </div>
+    </div>
+
+    <!-- WORKSPACE (Steps 3-5: Full-Screen) -->
+    <div id="page-workspace" class="page page-workspace-full">
+      <div class="workspace">
+        <div class="panel-left">
+          <h3>对话记录 <button onclick="newConversation()" title="新对话">+</button></h3>
+          <div class="conv-list" id="conv-list"></div>
+        </div>
+        <div class="panel-center">
+          <h3>
+            <button class="back-btn" onclick="exitWorkspace()">← 返回</button>
+            工作区 <span style="font-size:11px;color:#888;" id="status">就绪</span>
+          </h3>
+          <div class="chat-area" id="chat"></div>
+          <div class="chat-bar">
+            <input id="chat-input" placeholder="输入指令继续（如：提取队列、统计检验、生成报告）..." onkeydown="if(event.key==='Enter')send()">
+            <button onclick="send()">发送</button>
+          </div>
+        </div>
+        <div class="resizer" id="resizer"></div>
+        <div class="panel-right" id="right-panel">
+          <div class="tabs">
+            <button class="on" data-r="cohort" onclick="switchTab('cohort')">队列</button>
+            <button data-r="stats" onclick="switchTab('stats')">统计</button>
+            <button data-r="manuscript" onclick="switchTab('manuscript')">报告</button>
+          </div>
+          <div class="r-content" id="r-content"><div class="empty">报告将在此处展示</div></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-// ====== STATE ======
-let mode = 'ai_assisted';
-let currentTab = 'eda';
+// ============================================================
+// Bilingual Mappings
+// ============================================================
+const BI_TABLE = { "patients_24h":"患者信息表","admissions_24h":"入院记录表","cohort_24h":"研究队列表","diagnoses_icd_24h":"ICD诊断表","sepsis_icu_labevents_core_numeric_24h":"ICU核心实验室检查表","sepsis_icu_labevents_core_items":"实验室项目字典表","filter_stats":"筛选统计表","research_cohort":"研究队列" };
+const BI_KEY = { "subject_id":"患者ID","hadm_id":"住院ID","stay_id":"ICU住院ID","itemid":"项目ID","charttime":"记录时间","gender":"性别","anchor_age":"锚定年龄","hospital_expire_flag":"住院死亡标志","admission_type":"入院类型" };
+const BI_LAB = { "lab_lactate":"乳酸","lab_glucose":"血糖","lab_creatinine":"肌酐","lab_bicarbonate":"碳酸氢盐","lab_wbc":"白细胞计数","lab_platelet":"血小板计数","lab_sodium":"钠","lab_potassium":"钾","lab_rdw":"红细胞分布宽度","lab_inr":"国际标准化比值","lab_pt":"凝血酶原时间","lab_ptt":"部分凝血活酶时间","lab_hematocrit":"红细胞比容","lab_hemoglobin":"血红蛋白","lab_bun":"尿素氮","lab_chloride":"氯","lab_calcium":"钙","lab_aniongap":"阴离子间隙","lab_ph":"pH值","lab_albumin":"白蛋白","lab_bilirubin":"总胆红素","lab_alt":"谷丙转氨酶","lab_ast":"谷草转氨酶","lab_crp":"C反应蛋白","lab_procalcitonin":"降钙素原","lab_ddimer":"D-二聚体","lab_fibrinogen":"纤维蛋白原","lab_troponin":"肌钙蛋白" };
+
+function escHtml(s) { if(!s) return ""; return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function biTable(n) { return BI_TABLE[n] ? `${BI_TABLE[n]} <span class="en-name">(${escHtml(n)})</span>` : escHtml(n); }
+function biVar(n) { if(BI_LAB[n]) return `${BI_LAB[n]} <span class="en-name">(${escHtml(n)})</span>`; if(BI_KEY[n]) return `${BI_KEY[n]} <span class="en-name">(${escHtml(n)})</span>`; if(n.startsWith("lab_")) return `${escHtml(n.replace("lab_",""))} <span class="en-name">(${escHtml(n)})</span>`; return escHtml(n); }
+
+// ============================================================
+// Navigation
+// ============================================================
+let currentPage = "home";
+let currentTab = "cohort";
 let reports = {};
-let convId = '';
+let selectedIdeaId = null;
+let selectedIdeaData = null;
+let edaReportHtml = null;
 
-const CONV_KEY = 'mimic_agent_convos';
-function loadConvs() { try{return JSON.parse(localStorage.getItem(CONV_KEY)||'[]')}catch(e){return[]} }
-function saveConvs(c) { try{localStorage.setItem(CONV_KEY,JSON.stringify(c))}catch(e){} }
+function goTo(page) {
+  currentPage = page;
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-links a").forEach(a => a.classList.remove("active"));
+  document.getElementById("page-"+page).classList.add("active");
+  document.querySelector(`[data-nav="${page}"]`).classList.add("active");
 
-function saveConv() {
+  if (page === "workspace") {
+    document.querySelector(".top-nav").style.display = "none";
+    document.querySelector(".page-content").style.overflow = "hidden";
+    if (!convId) restoreLastConversation();
+    renderConvList();
+  } else {
+    document.querySelector(".top-nav").style.display = "flex";
+    document.querySelector(".page-content").style.overflow = "auto";
+  }
+
+  if (page === "data" && !edaReportHtml) autoLoadDataReport();
+  if (page === "ideas") autoLoadIdeasPage();
+}
+
+// ============================================================
+// Data Report Page (Skill 1: EDA)
+// ============================================================
+async function autoLoadDataReport() {
+  const container = document.getElementById("data-report-content");
+  container.innerHTML = '<div class="report-placeholder">正在运行数据探索分析...</div>';
+  try {
+    // Run Skill 1 directly (uses DB cache)
+    const r1 = await fetch("/api/skill1/run", { method: "POST" });
+    if (!r1.ok) throw new Error((await r1.json()).error || "Skill 1 执行失败");
+    const data = await r1.json();
+    if (data.status === "error") throw new Error(data.error);
+    edaReportHtml = buildEdaReportHtml(data);
+    container.innerHTML = edaReportHtml;
+    // Also store in reports for the workspace tab
+    reports.eda = data;
+  } catch(e) {
+    container.innerHTML = `<div class="error-msg visible">加载失败: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function buildEdaReportHtml(data) {
+  const tables = data.table_names || [];
+  const tableSizes = data.table_sizes || {};
+  const relationships = (data.relationships || []).slice(0, 15);
+  const kv = (data.summary?.key_clinical_variables || []).slice(0, 30);
+  const usable = data.summary?.usable_variables || 0;
+  const cautious = data.summary?.cautious_variables || 0;
+
+  let h = `<h1 class="dr-title">数据探索分析报告</h1>
+    <p class="dr-subtitle">数据目录: ${escHtml(data.data_directory || "")} — MIMIC-IV 脓毒症 ICU 24h 数据集</p>`;
+
+  // Metric cards
+  h += `<div class="dr-cards">
+    <div class="dr-card"><div class="dr-card-num">${data.tables_found}</div><div class="dr-card-label">数据表</div></div>
+    <div class="dr-card"><div class="dr-card-num">${(data.total_patients_estimate||0).toLocaleString()}</div><div class="dr-card-label">预估患者数</div></div>
+    <div class="dr-card"><div class="dr-card-num">${usable}</div><div class="dr-card-label">可用变量<br><span style="font-size:0.7rem;color:#aaa;">缺失率 &lt; 5%</span></div></div>
+    <div class="dr-card"><div class="dr-card-num">${cautious}</div><div class="dr-card-label">需谨慎变量<br><span style="font-size:0.7rem;color:#aaa;">缺失率 5–30%</span></div></div>
+  </div>`;
+
+  // Table cards
+  if (tables.length) {
+    h += `<div class="dr-section"><h3>数据表清单</h3><div class="dr-table-grid">`;
+    tables.forEach((t, i) => {
+      const sz = tableSizes[t] ? `${tableSizes[t]} MB` : "";
+      h += `<div class="dr-table-card">
+        <div class="dr-tc-icon">${i+1}</div>
+        <div class="dr-tc-info"><div class="dr-tc-name">${biTable(t)}</div>${sz ? `<div class="dr-tc-size">${sz}</div>` : ""}</div>
+      </div>`;
+    });
+    h += `</div></div>`;
+  }
+
+  // Relationships
+  if (relationships.length) {
+    h += `<div class="dr-section"><h3>表关联关系</h3><div class="dr-rel-list">`;
+    relationships.forEach(r => {
+      h += `<div class="dr-rel-item"><span>${biTable(r.left)}</span><span class="dr-rel-arrow">↔</span>
+        <span>${biTable(r.right)}</span><span style="color:#aaa;font-size:0.7rem;">${(r.shared_keys||[]).map(k => BI_KEY[k]||k).join("、")}</span></div>`;
+    });
+    h += `</div></div>`;
+  }
+
+  // Key variables table
+  if (kv.length) {
+    h += `<div class="dr-section"><h3>关键临床变量</h3>
+      <table class="dr-var-table"><tr><th>变量名</th><th style="width:80px">缺失率</th><th style="width:70px">质量</th></tr>`;
+    kv.forEach(v => {
+      const rate = v.missing_frac != null ? (v.missing_frac*100).toFixed(1)+"%" : "-";
+      const lvl = v.missing_level || "usable";
+      const lvlCls = lvl === "usable" ? "good" : lvl === "cautious" ? "warn" : "bad";
+      const lvlLabel = lvl === "usable" ? "可用" : lvl === "cautious" ? "谨慎" : "排除";
+      h += `<tr><td>${biVar(v.variable)}</td><td style="text-align:right;">${rate}</td><td><span class="dr-quality ${lvlCls}">${lvlLabel}</span></td></tr>`;
+    });
+    h += `</table></div>`;
+  }
+
+  // LLM quality narrative
+  if (data.llm_analysis) {
+    const la = data.llm_analysis;
+    const qn_cn = la.quality_narrative_cn || la.quality_narrative || "";
+    const qn_en = la.quality_narrative_en || "";
+    const rn_cn = la.relationship_notes_cn || la.relationship_notes || "";
+    const rn_en = la.relationship_notes_en || "";
+    if (qn_cn || qn_en) {
+      h += `<div class="dr-section"><h3>数据质量综合评估</h3>`;
+      if (qn_cn) h += `<div class="dr-narrative">${escHtml(qn_cn)}</div>`;
+      if (qn_en) h += `<div class="dr-narrative en">${escHtml(qn_en)}</div>`;
+      h += `</div>`;
+    }
+    if (rn_cn || rn_en) {
+      h += `<div class="dr-section"><h3>表关联解读</h3>`;
+      if (rn_cn) h += `<div class="dr-narrative">${escHtml(rn_cn)}</div>`;
+      if (rn_en) h += `<div class="dr-narrative en">${escHtml(rn_en)}</div>`;
+      h += `</div>`;
+    }
+  }
+  return h;
+}
+
+// ============================================================
+// Ideas Page (Skill 2)
+// ============================================================
+async function autoLoadIdeasPage() {
+  const grid = document.getElementById("ideas-grid");
+  grid.innerHTML = '<div style="color:#bbb;text-align:center;padding:40px;">加载中...</div>';
+  try {
+    const r = await fetch("/api/ideas/pool");
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const data = await r.json();
+    renderIdeasGrid(data.ideas || []);
+  } catch(e) {
+    grid.innerHTML = `<div class="error-msg visible">加载失败: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderIdeasGrid(ideas) {
+  const grid = document.getElementById("ideas-grid");
+  if (!ideas.length) {
+    grid.innerHTML = '<div style="color:#bbb;text-align:center;padding:40px;">选题库为空，请点击 <b>"重新生成选题"</b> 按钮生成</div>';
+    return;
+  }
+  grid.innerHTML = ideas.map((idea, i) => {
+    const sel = idea.id === selectedIdeaId ? " selected" : "";
+    const title_cn = idea.title_cn || idea.title || "Untitled";
+    const title_en = idea.title_en || "";
+    const hyp_cn = idea.hypothesis_cn || idea.hypothesis || "";
+    const hyp_en = idea.hypothesis_en || "";
+    return `<div class="idea-card-lg${sel}" onclick="selectIdeaOnPage('${idea.id}', this)" data-id="${idea.id}">
+      <div class="ic-id">${idea.id} · #${i+1}</div>
+      <div class="ic-title">${escHtml(title_cn)}</div>
+      ${title_en ? `<div class="ic-title-en">${escHtml(title_en)}</div>` : ""}
+      <div class="ic-hyp">${escHtml(hyp_cn)}</div>
+      ${hyp_en ? `<div class="ic-hyp" style="color:#888;font-size:0.73rem;">${escHtml(hyp_en)}</div>` : ""}
+      <div class="ic-meta">
+        <span>评分: ${idea.total_score || "-"}</span>
+        <span>方法: ${escHtml(idea.suggested_method || "-")}</span>
+      </div>
+    </div>`;
+  }).join("");
+
+  if (selectedIdeaId) {
+    document.getElementById("ideas-selected-label").style.display = "inline";
+    document.getElementById("ideas-selected-label").textContent = `已选: ${selectedIdeaId}`;
+    document.getElementById("btn-to-workspace").disabled = false;
+  }
+}
+
+async function selectIdeaOnPage(id, el) {
+  try {
+    const r = await fetch("/api/skill2/select-idea", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ idea_id: id })
+    });
+    const result = await r.json();
+    if (result.status === "selected") {
+      selectedIdeaId = id;
+      selectedIdeaData = result.idea;
+      document.querySelectorAll(".idea-card-lg").forEach(c => c.classList.remove("selected"));
+      if (el) el.classList.add("selected");
+      document.getElementById("ideas-selected-label").style.display = "inline";
+      document.getElementById("ideas-selected-label").textContent = `已选: ${id}`;
+      document.getElementById("btn-to-workspace").disabled = false;
+    } else {
+      alert("选择失败: " + (result.error || "未知错误"));
+    }
+  } catch(e) {
+    alert("选择失败: " + e.message);
+  }
+}
+
+function goToWorkspace() {
+  if (!selectedIdeaId) return;
+  if (!convId) newConversation(true);
+  goTo("workspace");
+
+  const chat = document.getElementById("chat");
+  if (!chat.querySelector(".msg")) {
+    const title = selectedIdeaData?.title_cn || selectedIdeaData?.title || selectedIdeaId;
+    chat.innerHTML += `<div class="msg agent"><div class="bubble">已选择选题: <strong>${escHtml(title)}</strong><br><br>输入指令继续下一步：<br>— <b>提取队列</b><br>— <b>统计检验</b><br>— <b>生成报告</b></div></div>`;
+    chat.scrollTop = chat.scrollHeight;
+  }
+}
+
+function exitWorkspace() {
+  saveConversation();
+  document.querySelector(".top-nav").style.display = "flex";
+  document.querySelector(".page-content").style.overflow = "auto";
+  goTo("ideas");
+}
+
+// ============================================================
+// Conversation History (localStorage)
+// ============================================================
+const CONV_KEY = "mimic_agent_convs";
+let convId = "";
+
+function loadConvs() {
+  try { return JSON.parse(localStorage.getItem(CONV_KEY) || "[]"); }
+  catch(e) { return []; }
+}
+
+function saveConvs(convs) {
+  try { localStorage.setItem(CONV_KEY, JSON.stringify(convs)); } catch(e) {}
+}
+
+function restoreLastConversation() {
+  const convs = loadConvs();
+  if (convs.length > 0) {
+    const last = convs[0];
+    convId = last.id;
+    reports = last.reports || {};
+    selectedIdeaId = last.selectedIdeaId || "";
+    selectedIdeaData = last.selectedIdeaData || null;
+    document.getElementById("chat").innerHTML = last.chatHtml || "";
+    document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+    renderReport();
+    document.getElementById("status").textContent = "就绪";
+  }
+}
+
+function saveConversation() {
   if (!convId) return;
   let convs = loadConvs();
   let c = convs.find(x => x.id === convId);
-  if (!c) { c = {id: convId}; convs.unshift(c); }
-  c.title = c.title || '新对话';
-  c.mode = mode;
+  if (!c) { c = { id: convId }; convs.unshift(c); }
+  c.title = c.title || (selectedIdeaData?.title_cn || selectedIdeaData?.title || "新对话").substring(0, 20);
   c.reports = reports;
-  c.chatHtml = document.getElementById('chat').innerHTML;
+  c.chatHtml = document.getElementById("chat").innerHTML;
+  c.selectedIdeaId = selectedIdeaId;
+  c.selectedIdeaData = selectedIdeaData;
   c.time = Date.now();
   saveConvs(convs);
 }
 
-function renderConvs() {
+function newConversation(silent) {
+  saveConversation();
+  convId = "c" + Date.now();
+  document.getElementById("chat").innerHTML = "";
+  reports = {};
+  currentTab = "cohort";
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.r === "cohort"));
+  document.getElementById("r-content").innerHTML = '<div class="empty">报告将在此处展示</div>';
+  document.getElementById("status").textContent = "就绪 — 新对话";
+  if (!silent) renderConvList();
+}
+
+function renderConvList() {
   const convs = loadConvs();
-  const list = document.getElementById('conv-list');
-  list.innerHTML = convs.slice(0, 30).map(c =>
-    `<div onclick="switchConv('${c.id}')" style="padding:10px;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;${c.id===convId?'background:var(--primary-light);color:var(--primary);font-weight:600':'color:var(--text2)'}"><div><div>${c.title||'新对话'}</div><div style="font-size:10px;color:var(--text3)">${new Date(c.time).toLocaleTimeString()}</div></div><span onclick="event.stopPropagation();deleteConv('${c.id}')" style="font-size:16px;color:var(--text3);padding:2px 6px;border-radius:4px;display:none" class="conv-del">×</span></div>`
-  ).join('') || '<div style="padding:10px;color:var(--text3);font-size:12px">暂无对话</div>';
+  const list = document.getElementById("conv-list");
+  list.innerHTML = convs.slice(0, 30).map(c => {
+    const active = c.id === convId ? " active" : "";
+    const time = new Date(c.time).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+    return `<div class="conv-item${active}" onclick="switchConversation('${c.id}')">
+      <div style="flex:1;min-width:0;">
+        <div class="conv-title">${escHtml(c.title || "新对话")}</div>
+        <div class="conv-time">${time}</div>
+      </div>
+      <span class="conv-del" onclick="event.stopPropagation();deleteConversation('${c.id}')">×</span>
+    </div>`;
+  }).join("") || '<div style="padding:10px;color:#aaa;font-size:12px;text-align:center;">暂无历史对话</div>';
 }
 
-function deleteConv(id) {
-  let convs = loadConvs();
-  convs = convs.filter(c => c.id !== id);
-  saveConvs(convs);
-  if (convId === id) newConv();
-  renderConvs();
-}
-
-function newConv() {
-  saveConv();
-  convId = 'c'+Date.now();
-  reports = {}; currentTab = 'eda';
-  document.getElementById('chat').innerHTML = '';
-  document.getElementById('r-content').innerHTML = '<div class="empty">报告将在此处展示</div>';
-  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.r === 'eda'));
-  document.getElementById('status').textContent = '就绪 — 新对话';
-  renderConvs();
-}
-
-function switchConv(id) {
-  saveConv();
+function switchConversation(id) {
+  saveConversation();
   let convs = loadConvs();
   let c = convs.find(x => x.id === id);
   if (!c) return;
   convId = c.id;
-  mode = c.mode || 'ai_assisted';
   reports = c.reports || {};
-  currentTab = 'eda';
-  document.getElementById('chat').innerHTML = c.chatHtml || '';
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
-  document.getElementById('landing').style.display = 'none';
-  document.getElementById('workspace').classList.add('on');
-  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.r === 'eda'));
+  selectedIdeaId = c.selectedIdeaId || "";
+  selectedIdeaData = c.selectedIdeaData || null;
+  currentTab = "cohort";
+  document.getElementById("chat").innerHTML = c.chatHtml || "";
+  document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.r === "cohort"));
   renderReport();
-  renderConvs();
-  document.getElementById('status').textContent = '就绪';
+  renderConvList();
+  document.getElementById("status").textContent = "就绪";
 }
 
-setInterval(saveConv, 5000);
-window.addEventListener('beforeunload', saveConv);
-
-// ====== MODE ======
-function setMode(btn) {
-  document.querySelectorAll('.mode-row button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  mode = btn.dataset.mode;
+function deleteConversation(id) {
+  let convs = loadConvs();
+  convs = convs.filter(c => c.id !== id);
+  saveConvs(convs);
+  if (convId === id) newConversation(true);
+  renderConvList();
 }
 
-// ====== SEND ======
+setInterval(saveConversation, 5000);
+window.addEventListener("beforeunload", saveConversation);
+
+async function regenerateIdeas() {
+  const btn = document.getElementById("btn-regen");
+  const spinner = document.getElementById("ideas-spinner");
+  btn.disabled = true; spinner.className = "spinner visible";
+  document.getElementById("ideas-error").className = "error-msg";
+  try {
+    // Run Skill 2 directly to generate new ideas
+    const r = await fetch("/api/skill2/run", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ mode: "ai_assisted" })
+    });
+    if (!r.ok) throw new Error((await r.json()).error || "选题生成失败");
+    selectedIdeaId = null; selectedIdeaData = null;
+    document.getElementById("ideas-selected-label").style.display = "none";
+    document.getElementById("btn-to-workspace").disabled = true;
+    await autoLoadIdeasPage();
+  } catch(e) {
+    document.getElementById("ideas-error").textContent = e.message;
+    document.getElementById("ideas-error").className = "error-msg visible";
+  }
+  btn.disabled = false; spinner.className = "spinner";
+}
+
+// ============================================================
+// Workspace — SSE Streaming Pipeline (Steps 3-5)
+// ============================================================
 async function send() {
-  const onLanding = document.getElementById('landing').style.display !== 'none';
-  const inp = document.getElementById(onLanding ? 'landing-input' : 'chat-input');
+  const inp = document.getElementById("chat-input");
   const msg = inp.value.trim();
   if (!msg) return;
-  inp.value = '';
+  inp.value = "";
 
-  if (onLanding) {
-    document.getElementById('landing').style.display = 'none';
-    document.getElementById('workspace').classList.add('on');
-    convId = 'c' + Date.now();
-    // Set title from first message
-    let convs = loadConvs();
-    convs.unshift({id: convId, title: msg.substring(0, 20), mode: mode, time: Date.now()});
-    saveConvs(convs);
-    renderConvs();
-  }
+  addMsg("user", msg);
+  document.getElementById("status").textContent = "分析中...";
 
-  addMsg('user', msg);
-  document.getElementById('status').textContent = '分析中...';
+  let skill = "skill3";
+  const lower = msg.toLowerCase();
+  if (lower.includes("报告") || lower.includes("report") || lower.includes("manuscript")) skill = "skill5";
+  else if (lower.includes("检验") || lower.includes("stats") || lower.includes("统计")) skill = "skill4";
+  else if (lower.includes("队列") || lower.includes("cohort") || lower.includes("提取") || lower.includes("数据")) skill = "skill3";
 
-  // Find which skill to run
-  let skill = 'skill1';
-  if (reports.eda && !reports.ideas) skill = 'skill2';
-  else if (reports.ideas && !reports.cohort) skill = 'skill3';
-  else if (reports.cohort && !reports.stats) skill = 'skill4';
-  else if (reports.stats && !reports.manuscript) skill = 'skill5';
-  else if (!reports.eda) skill = 'skill1';
-  else if (!reports.ideas) skill = 'skill2';
-  else if (!reports.cohort) skill = 'skill3';
-  else if (!reports.stats) skill = 'skill4';
-  else if (!reports.manuscript) skill = 'skill5';
-
-  await streamSkill(skill);
-  showHint();
+  await streamSkillSSE(skill);
 }
 
-// ====== ADD CHAT MESSAGE ======
 function addMsg(role, text) {
-  const cls = role === 'user' ? 'user' : 'agent';
-  document.getElementById('chat').innerHTML +=
-    `<div class="msg ${cls}"><div class="bubble">${text}</div></div>`;
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+  const cls = role === "user" ? "user" : "agent";
+  document.getElementById("chat").innerHTML += `<div class="msg ${cls}"><div class="bubble">${text}</div></div>`;
+  document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
 }
 
-function addStreamMsg(text) {
-  // Add a streaming-type message that we'll update
-  const id = 'stream-' + Date.now();
-  document.getElementById('chat').innerHTML +=
-    `<div class="msg agent" id="${id}"><div class="bubble">${text}</div></div>`;
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
-  return id;
-}
-
-function updateStreamMsg(id, html) {
-  const el = document.getElementById(id);
-  if (el) { el.querySelector('.bubble').innerHTML = html; }
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
-}
-
-// ====== STREAM SKILL ======
-async function streamSkill(skill) {
-  const streamId = addStreamMsg('<span class="spin"></span> 准备中...');
+async function streamSkillSSE(skill) {
+  const streamId = "stream-" + Date.now();
+  document.getElementById("chat").innerHTML +=
+    `<div class="msg agent" id="${streamId}"><div class="bubble"><span class="spinner visible" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span> 准备中...</div></div>`;
+  document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
 
   try {
-    const resp = await fetch('/api/stream-pipeline', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({skill: skill, mode: mode, message: 'run'})
+    const resp = await fetch("/api/stream-pipeline", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ skill: skill })
     });
 
     const reader = resp.body.getReader();
     const dec = new TextDecoder();
-    let buf = '';
-    let html = '';
+    let buf = "", html = "";
 
     while (true) {
-      const {done, value} = await reader.read();
+      const { done, value } = await reader.read();
       if (done) break;
-      buf += dec.decode(value, {stream: true});
-      const lines = buf.split('\n');
-      buf = lines.pop() || '';
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() || "";
 
       for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
+        if (!line.startsWith("data: ")) continue;
         try {
           const d = JSON.parse(line.slice(6));
-          if (d.event === 'skill_start') {
+          if (d.event === "skill_start") {
             html += `<div class="label">${d.message}</div>`;
-          } else if (d.event === 'step') {
-            html += `<div class="bubble step"><span class="spin"></span> ${d.message}</div>`;
-          } else if (d.event === 'skill_complete') {
-            html = html.replace(/<span class="spin"><\/span>/g, '✅');
-            html = html.replace(/正在/g, '已完成：');
+          } else if (d.event === "step") {
+            html += `<div class="bubble step"><span class="spinner visible" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span> ${d.message}</div>`;
+          } else if (d.event === "skill_complete") {
+            html = html.replace(/<span class="spinner visible".*?><\/span>/g, "✅");
             html += `<div class="bubble done">✅ ${d.message}</div>`;
-            if (d.skill === 'skill1' && d.data) reports.eda = d.data;
-            if (d.skill === 'skill2' && d.data) reports.ideas = d.data;
-            if (d.skill === 'skill3' && d.data) reports.cohort = d.data;
-            if (d.skill === 'skill4' && d.data) reports.stats = d.data;
-            if (d.skill === 'skill5') reports.manuscript = d.data?.manuscript || '';
+            if (d.skill === "skill1" && d.data) reports.eda = d.data;
+            if (d.skill === "skill2" && d.data) reports.ideas = d.data;
+            if (d.skill === "skill3" && d.data) reports.cohort = d.data;
+            if (d.skill === "skill4" && d.data) reports.stats = d.data;
+            if (d.skill === "skill5") reports.manuscript = d.data?.manuscript || "";
             renderReport();
-          } else if (d.event === 'pipeline_complete') {
-            html = html.replace(/<span class="spin"><\/span>/g, '✅');
+          } else if (d.event === "pipeline_complete") {
+            html = html.replace(/<span class="spinner visible".*?><\/span>/g, "✅");
             html += `<div class="bubble done">${d.message}</div>`;
-          } else if (d.event === 'error') {
-            html += `<div class="bubble" style="background:var(--danger-light);border-color:#fecaca;">❌ ${d.message}</div>`;
+          } else if (d.event === "error") {
+            html += `<div class="bubble" style="background:#fef2f2;border-color:#fecaca;">❌ ${d.message}</div>`;
           }
         } catch(e) {}
       }
-      updateStreamMsg(streamId, html || '<span class="spin"></span> 处理中...');
+      updateStreamMsg(streamId, html || '<span class="spinner visible" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span> 处理中...');
     }
-    updateStreamMsg(streamId, html || '✅ 完成');
-    document.getElementById('status').textContent = '就绪';
+    updateStreamMsg(streamId, html || "✅ 完成");
+    document.getElementById("status").textContent = "就绪";
+    showHint();
   } catch(e) {
-    updateStreamMsg(streamId, '❌ 连接失败: ' + e.message);
-    document.getElementById('status').textContent = '错误';
+    updateStreamMsg(streamId, "❌ 连接失败: " + e.message);
+    document.getElementById("status").textContent = "错误";
   }
 }
 
-function showHint() {
-  let h = '';
-  if (reports.eda && !reports.ideas) h = '💡 数据探索完成。输入 <b>生成选题</b> 继续，或在右侧面板查看报告。';
-  else if (reports.ideas && !reports.cohort) h = '💡 选题就绪。在右侧 <b>选题</b> 标签中选择一个题目，点击 <b>选择并检验</b> 开始提取队列。';
-  else if (reports.cohort && !reports.stats) h = '💡 队列提取完成。输入 <b>统计检验</b> 继续，或在右侧面板查看队列。';
-  else if (reports.stats && !reports.manuscript) h = '💡 统计完成。输入 <b>生成报告</b> 继续。';
-  else if (reports.manuscript) h = '🎉 全流程完成！查看右侧报告面板。';
-  if (h) document.getElementById('chat').innerHTML += `<div class="hint">${h}</div>`;
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+function updateStreamMsg(id, html) {
+  const el = document.getElementById(id);
+  if (el) { el.querySelector(".bubble").innerHTML = html; }
+  document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
 }
 
-// ====== REPORTS ======
+function showHint() {
+  let h = "";
+  if (reports.eda && !reports.cohort) h = "💡 EDA 完成。输入 <b>提取队列</b> 继续。";
+  else if (reports.cohort && !reports.stats) h = "💡 队列就绪。输入 <b>统计检验</b> 继续。";
+  else if (reports.stats && !reports.manuscript) h = "💡 统计完成。输入 <b>生成报告</b> 继续。";
+  else if (reports.manuscript) h = "🎉 全流程完成！查看右侧报告面板。";
+  if (h) document.getElementById("chat").innerHTML += `<div class="hint">${h}</div>`;
+  document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+}
+
+// ============================================================
+// Right Panel — Report Tabs
+// ============================================================
 function switchTab(r) {
   currentTab = r;
-  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.r === r));
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.r === r));
   renderReport();
 }
 
 function renderReport() {
-  const el = document.getElementById('r-content');
+  const el = document.getElementById("r-content");
   const d = reports[currentTab];
   if (!d) { el.innerHTML = '<div class="empty">尚未生成</div>'; return; }
 
-  if (currentTab === 'eda') {
-    const s = d.summary || {};
-    let h = `<h2>📊 数据质量报告</h2>`;
-    h += `<p><strong>数据目录:</strong> ${d.data_directory||'N/A'}</p>`;
-    h += `<p><strong>数据表:</strong> ${d.tables_found} 张 | <strong>患者数:</strong> ${(d.total_patients_estimate||0).toLocaleString()}</p>`;
-    h += `<p><strong>已分析字段:</strong> ${s.total_columns_analyzed||0} | <strong>可用变量:</strong> ${s.usable_variables||0} | <strong>谨慎变量:</strong> ${s.cautious_variables||0}</p>`;
-
-    // Table relationships
-    const rels = d.relationships || [];
-    if (rels.length > 0) {
-      h += `<h3>🔗 表间关系 (${rels.length})</h3><table><tr><th>表A</th><th>表B</th><th>共享主键</th></tr>`;
-      rels.slice(0,15).forEach(r => h += `<tr><td>${r.left}</td><td>${r.right}</td><td>${(r.shared_keys||[]).join(', ')}</td></tr>`);
-      h += `</table>`;
-    }
-
-    // Per-table details
-    (d.table_reports||[]).forEach(tr => {
-      h += `<h3>📋 ${tr.table} <span style="font-size:11px;color:var(--text2)">${(tr.n_rows||0).toLocaleString()} 行 × ${tr.n_cols||0} 列${tr.is_sample?' (采样)':''}</span></h3>`;
-      const cols = tr.columns || [];
-      if (cols.length > 0) {
-        h += `<table><tr><th>列名</th><th>类型</th><th>缺失率</th><th>评级</th><th>唯一值</th><th>中位数/均值</th></tr>`;
-        cols.slice(0, 20).forEach(c => {
-          const lvl = c.missing_level || '?';
-          const lvlColor = lvl==='usable'?'var(--success)':(lvl==='cautious'?'var(--warning)':'var(--danger)');
-          const statsStr = c.stats ? `中位:${c.stats.median||'?'} / 均值:${c.stats.mean||'?'}` : '';
-          h += `<tr><td><strong>${c.name}</strong></td><td>${c.dtype||'?'}</td><td>${((c.missing_frac||0)*100).toFixed(1)}%</td><td style="color:${lvlColor};font-weight:700">${lvl}</td><td>${c.unique_values||0}</td><td style="font-size:11px">${statsStr}</td></tr>`;
-        });
-        if (cols.length > 20) h += `<tr><td colspan="6" style="color:var(--text3)">... 还有 ${cols.length-20} 列</td></tr>`;
-        h += `</table>`;
-      }
-      // Excluded columns
-      const excluded = tr.excluded_columns || [];
-      if (excluded.length > 0) h += `<p style="color:var(--danger);font-size:12px;">⚠ 排除列 (${excluded.length}): ${excluded.join(', ')}</p>`;
-    });
-
-    // Key clinical variables
-    const kv = s.key_clinical_variables || [];
-    if (kv.length > 0) {
-      h += `<h3>🔬 关键临床变量 (${kv.length})</h3><table><tr><th>变量</th><th>缺失率</th><th>评级</th><th>中位数</th></tr>`;
-      kv.slice(0,30).forEach(v => h += `<tr><td>${v.variable||'?'}</td><td>${((v.missing_frac||0)*100).toFixed(1)}%</td><td>${v.missing_level||'?'}</td><td>${v.stats?.median||'N/A'}</td></tr>`);
-      h += `</table>`;
-    }
-
-    // LLM analysis
-    if (d.llm_analysis) {
-      h += `<h3>🤖 AI 分析</h3>`;
-      if (d.llm_analysis.quality_narrative) h += `<p>${d.llm_analysis.quality_narrative}</p>`;
-      if (d.llm_analysis.relationship_notes) h += `<p>${d.llm_analysis.relationship_notes}</p>`;
-    }
-
-    el.innerHTML = h;
-
-  } else if (currentTab === 'ideas') {
-    const items = d.ideas || d.papers || [];
-    const isPaper = !!d.papers;
-    const total = d.total_ideas || items.length;
-    const offset = d.batch_offset || 0;
-    let h = `<h2>💡 ${isPaper?'候选论文':'研究选题'}</h2>`;
-    h += `<p>${items.length} 个候选 (共 ${total} 个) | 第 ${Math.floor(offset/10)+1} 批</p>`;
-    h += `<button onclick="shuffleIdeas()" style="margin-bottom:12px;padding:8px 20px;border-radius:8px;border:1px solid var(--primary);background:var(--surface);color:var(--primary);font-size:13px;cursor:pointer;font-weight:600;transition:all .2s">🔄 换一批</button>`;
-    items.forEach((item, i) => {
-      const titleText = item.title_cn || item.title || item.title_en || '';
-      const hypText = item.hypothesis_cn || item.hypothesis || item.hypothesis_en || '';
-      const scores = item.scores || {};
-      h += `<div style="margin:10px 0;padding:12px;background:#f9fafb;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="selectIdea('${item.id}','${titleText.replace(/'/g,"\\'").substring(0,60)}')">`;
-      h += `<strong style="font-size:14px">${item.id||('#'+(i+1))}</strong> `;
-      if (item.total_score) h += `<span style="color:var(--success);font-weight:700;font-size:14px">★ ${item.total_score}</span> `;
-      if (isPaper) h += `<span style="color:var(--warning);font-size:11px">${item.journal||''} (${item.year||''})</span>`;
-      h += `<div style="font-size:13px;font-weight:600;margin:4px 0">${titleText.substring(0,120)}</div>`;
-      h += `<div style="font-size:12px;color:var(--text2)">${(hypText||item.key_findings||'').substring(0,200)}</div>`;
-      if (item.suggested_method) h += `<div style="font-size:11px;color:var(--text3);margin-top:2px">方法: ${item.suggested_method.substring(0,80)}</div>`;
-      if (!isPaper && Object.keys(scores).length > 0) {
-        h += `<div style="display:flex;gap:10px;margin-top:8px;font-size:10px;color:var(--text3)">`;
-        h += `<span>创新性: <b style="color:var(--primary)">${scores.innovation||'-'}</b></span>`;
-        h += `<span>可验证: <b style="color:var(--primary)">${scores.data_verifiability||'-'}</b></span>`;
-        h += `<span>临床: <b style="color:var(--primary)">${scores.clinical_significance||'-'}</b></span>`;
-        h += `<span>可行: <b style="color:var(--primary)">${scores.statistical_feasibility||'-'}</b></span>`;
-        h += `<span>发表: <b style="color:var(--primary)">${scores.publication_potential||'-'}</b></span>`;
-        h += `<span>风险: <b style="color:var(--primary)">${scores.risk||'-'}</b></span>`;
-        h += `</div>`;
-      }
-      h += `<button style="margin-top:8px;padding:6px 16px;border-radius:6px;border:1px solid var(--primary);background:var(--primary);color:#fff;font-size:12px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();selectIdea('${item.id}','${titleText.replace(/'/g,"\\'").substring(0,60)}')">选择并提取队列 →</button>`;
-      h += `</div>`;
-    });
-    el.innerHTML = h;
-
-  } else if (currentTab === 'cohort') {
-    const steps = d.steps || [];
-    const funnel = d.funnel || {};
+  if (currentTab === "cohort") {
     let h = `<h2>📦 研究队列</h2>`;
-    h += `<p><strong>研究:</strong> ${d.idea_title||'N/A'}</p>`;
+    h += `<p><strong>研究:</strong> ${escHtml(d.idea_title||"N/A")}</p>`;
     h += `<p><strong>最终队列:</strong> ${(d.final_cohort_size||0).toLocaleString()} 名患者 | <strong>变量数:</strong> ${d.n_columns||0}</p>`;
-    if (d.variables_included && d.variables_included.length > 0) {
-      h += `<p><strong>已提取变量:</strong> ${d.variables_included.join(', ')}</p>`;
-    }
-    if (d.variables_not_found && d.variables_not_found.length > 0) {
-      h += `<p style="color:var(--danger)"><strong>未找到变量:</strong> ${d.variables_not_found.join(', ')}</p>`;
-    }
-    if (d.warnings && d.warnings.length > 0) {
-      d.warnings.forEach(w => h += `<p style="color:var(--warning)">⚠ ${w}</p>`);
-    }
-    if (d.output_file) {
-      h += `<p style="font-size:11px;color:var(--text3)">输出: ${d.output_file}</p>`;
-    }
-    // Funnel steps table
-    if (steps.length > 0) {
-      h += `<h3>📊 筛选漏斗</h3><table><tr><th>步骤</th><th>患者数</th></tr>`;
-      steps.forEach(s => h += `<tr><td>${s.description||''}</td><td>${(s.count||0).toLocaleString()}</td></tr>`);
+    if (d.variables_included?.length) h += `<p><strong>已提取变量:</strong> ${d.variables_included.join(", ")}</p>`;
+    if (d.variables_not_found?.length) h += `<p style="color:#e74c3c;"><strong>未找到:</strong> ${d.variables_not_found.join(", ")}</p>`;
+    if (d.warnings?.length) d.warnings.forEach(w => h += `<p style="color:#f39c12;">⚠ ${escHtml(w)}</p>`);
+    if (d.funnel?.steps?.length) {
+      h += `<h3>筛选漏斗</h3><table><tr><th>步骤</th><th>患者数</th></tr>`;
+      d.funnel.steps.forEach(s => h += `<tr><td>${escHtml(s.description||"")}</td><td>${(s.count||0).toLocaleString()}</td></tr>`);
       h += `</table>`;
     }
     el.innerHTML = h;
-
-  } else if (currentTab === 'stats') {
+  } else if (currentTab === "stats") {
     const results = d.results || [];
     let h = `<h2>📈 统计检验报告</h2>`;
-    h += `<p><strong>研究假设:</strong> ${d.hypothesis||'N/A'}</p>`;
     h += `<p><strong>样本量:</strong> ${(d.sample_size||0).toLocaleString()} | <strong>检验项:</strong> ${results.length}</p>`;
-    h += '<table><tr><th>分析项</th><th>方法</th><th>N</th><th>效应量</th><th>p值</th><th>显著性</th></tr>';
+    h += '<table><tr><th>分析项</th><th>方法</th><th>N</th><th>p值</th><th>显著性</th></tr>';
     results.forEach(r => {
-      let eff = '-';
-      if (r.odds_ratio) eff = `OR=${r.odds_ratio}`;
-      else if (r.pearson_r !== undefined) eff = `r=${r.pearson_r}`;
-      const sigTag = r.significant ? '<span style="color:var(--danger);font-weight:700">● 显著</span>' : '<span style="color:var(--text3)">○ 不显著</span>';
-      h += `<tr><td><strong>${r.label||'?'}</strong></td><td>${(r.method||'').substring(0,25)}</td><td>${r.n||'-'}</td><td>${eff}</td><td>p=${r.p_value||'N/A'}</td><td>${sigTag}</td></tr>`;
+      const sigTag = r.significant ? '<span style="color:#e74c3c;font-weight:700">● 显著</span>' : '<span style="color:#aaa">○</span>';
+      h += `<tr><td><strong>${escHtml(r.label||"?")}</strong></td><td>${escHtml((r.method||"").substring(0,25))}</td><td>${r.n||"-"}</td><td>p=${r.p_value||"N/A"}</td><td>${sigTag}</td></tr>`;
     });
     h += '</table>';
-    // Group comparisons
-    results.filter(r => r.group0_median !== undefined).forEach(r => {
-      h += `<div style="margin:8px 0;padding:10px;background:#f9fafb;border-radius:8px">`;
-      h += `<strong>${r.label}</strong><br>`;
-      h += `幸存组中位数: <b>${r.group0_median}</b> vs 死亡组: <b>${r.group1_median}</b> | p=${r.p_value}`;
-      if (r.odds_ratio) h += `<br>OR = ${r.odds_ratio} (95% CI: ${(r.or_95ci||[]).join(', ')})`;
-      h += `</div>`;
-    });
-    if (d.interpretation) {
-      h += `<h3>📋 结果解读</h3><div style="white-space:pre-wrap;line-height:1.8">${d.interpretation.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'<br><br>').replace(/^- (.+)$/gm,'• $1')}</div>`;
-    }
+    if (d.interpretation) h += `<h3>📋 结果解读</h3><div style="white-space:pre-wrap;line-height:1.8">${d.interpretation}</div>`;
     el.innerHTML = h;
-
-  } else if (currentTab === 'manuscript') {
-    const md = typeof d === 'string' ? d : (d.manuscript || '');
-    const html = md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>')
-      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^---$/gm,'<hr>').replace(/\n\n/g,'<br><br>');
+  } else if (currentTab === "manuscript") {
+    const md = typeof d === "string" ? d : (d.manuscript || "");
+    const html = md.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/^### (.+)$/gm,"<h3>$1</h3>").replace(/^## (.+)$/gm,"<h2>$1</h2>").replace(/^# (.+)$/gm,"<h1>$1</h1>")
+      .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\n\n/g,"<br><br>");
     el.innerHTML = `<h2>📄 研究报告</h2><div style="white-space:pre-wrap;line-height:1.8">${html}</div>`;
   }
 }
 
-// ====== SHUFFLE IDEAS ======
-async function shuffleIdeas() {
-  try {
-    const resp = await fetch('/api/ideas/shuffle', {method: 'POST'});
-    const data = await resp.json();
-    if (data.ideas) {
-      reports.ideas = data;
-      switchTab('ideas');
-    }
-  } catch(e) {
-    console.error('shuffle failed', e);
-  }
-}
-
-// ====== IDEA SELECTION (from right panel) ======
-async function selectIdea(id, title) {
-  // Echo in chat
-  document.getElementById('chat').innerHTML +=
-    `<div class="msg user"><div class="bubble">已选择: <strong>${id}</strong> — ${title}</div></div>`;
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
-
-  // Save selection on backend
-  try {
-    await fetch('/api/skill2/select-idea', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({idea_id: id})
-    });
-  } catch(e) {}
-
-  // Switch to cohort tab and run Skill Cohort
-  switchTab('cohort');
-  document.getElementById('status').textContent = '提取研究队列...';
-  await streamSkill('skill3');
-  showHint();
-}
-
-// ====== INIT ======
-renderConvs();
-
-// ====== RESIZER ======
+// ============================================================
+// Resizer
+// ============================================================
 (function(){
-  const r = document.getElementById('resizer');
-  const ws = document.getElementById('workspace');
-  let sx, sw;
-  r.onmousedown = e => { sx = e.clientX; sw = document.getElementById('right-panel').offsetWidth; r.classList.add('on'); document.body.style.cursor='col-resize'; };
-  document.onmousemove = e => { if(!sx) return; ws.style.gridTemplateColumns = `250px 1fr 6px ${Math.max(400,Math.min(900,sw+sx-e.clientX))}px`; };
-  document.onmouseup = () => { sx = null; r.classList.remove('on'); document.body.style.cursor=''; };
+  const r = document.getElementById("resizer");
+  const ws = document.querySelector(".workspace");
+  let dragging = false, startX, startW;
+  r.addEventListener("mousedown", e => {
+    dragging = true; startX = e.clientX;
+    startW = document.getElementById("right-panel").offsetWidth;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    e.preventDefault();
+  });
+  window.addEventListener("mousemove", e => {
+    if (!dragging) return;
+    const newW = Math.max(320, Math.min(800, startW + startX - e.clientX));
+    ws.style.gridTemplateColumns = `220px 1fr 6px ${newW}px`;
+  });
+  window.addEventListener("mouseup", () => {
+    dragging = false;
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  });
 })();
 </script>
 </body>

@@ -81,7 +81,7 @@ def api_reset():
 
 @app.route("/api/skill1/run", methods=["POST"])
 def api_run_skill1():
-    """Run Skill 1: EDA on the MIMIC data."""
+    """Run Skill 1: EDA on the MIMIC data. Uses cache when available."""
     sid = _get_session_id()
     data_dir = request.json.get("data_dir", DATA_DIR) if request.is_json else DATA_DIR
 
@@ -89,7 +89,16 @@ def api_run_skill1():
         return jsonify({"error": f"Data directory not found: {data_dir}"}), 400
 
     try:
+        # Check cache first
+        cached = get_eda_cache(data_dir)
+        if cached:
+            s = orchestrator.get_session(sid)
+            s.skill1_output = cached
+            s.data_dir = data_dir
+            return jsonify(cached)
+
         output = orchestrator.run_skill1(sid, data_dir)
+        save_eda_cache(data_dir, output)
         return jsonify(output)
     except Exception as e:
         return jsonify({"error": str(e), "skill": "skill1"}), 500
@@ -151,6 +160,13 @@ def api_ideas_shuffle():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/ideas/pool")
+def api_ideas_pool():
+    """Get the cached ideas pool."""
+    ideas = get_ideas_pool()
+    return jsonify({"ideas": ideas, "count": len(ideas)})
 
 
 @app.route("/api/skill2/submit-idea", methods=["POST"])

@@ -121,23 +121,21 @@ class AgentOrchestrator:
         session.current_page = 2
 
     def select_idea(self, session_id: str, idea_id: str) -> dict:
-        """Select a specific research idea or paper."""
+        """Select a specific research idea or paper from session or ideas pool."""
         session = self.get_session(session_id)
         session.selected_idea_id = idea_id
 
+        # Search in session skill2 output first
         if session.skill2_output:
-            # Search in ideas (ai_assisted mode)
             ideas = session.skill2_output.get("ideas", [])
             for idea in ideas:
                 if idea.get("id") == idea_id:
                     session.selected_idea = idea
                     return {"status": "selected", "idea": idea}
 
-            # Search in papers (paper_reproduction mode)
             papers = session.skill2_output.get("papers", [])
             for paper in papers:
                 if paper.get("id") == idea_id:
-                    # Convert paper to idea format for downstream skills
                     idea = {
                         "id": paper.get("id", ""),
                         "title": paper.get("title", ""),
@@ -161,6 +159,14 @@ class AgentOrchestrator:
                     }
                     session.selected_idea = idea
                     return {"status": "selected", "idea": idea}
+
+        # Fallback: search in the cached ideas pool (DB/Redis)
+        from db import get_ideas_pool
+        pool = get_ideas_pool()
+        for idea in pool:
+            if idea.get("id") == idea_id:
+                session.selected_idea = idea
+                return {"status": "selected", "idea": idea}
 
         return {"error": f"Idea {idea_id} not found"}
 
