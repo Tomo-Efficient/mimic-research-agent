@@ -1,0 +1,22 @@
+# Secrets
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.bak
+
+# Database (local cache)
+history.db
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Backup files
+*.bak

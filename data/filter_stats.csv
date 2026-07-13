@@ -1,0 +1,11 @@
+file,processed_rows,kept_rows
+sepsis_icu_cohort.csv,17240,17240
+patients.csv,364627,12216
+admissions.csv,546028,14188
+diagnoses_icd.csv,6364488,356046
+sepsis_icu_chartevents.csv,142367794,21814350
+outputevents.csv,5359395,238809
+inputevents.csv,10953713,738428
+procedureevents.csv,808706,91183
+sepsis_icu_labevents.csv,12233530,1890931
+prescriptions.csv,20292611,860805

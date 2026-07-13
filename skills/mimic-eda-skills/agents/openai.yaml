@@ -1,0 +1,4 @@
+interface:
+  display_name: "MIMIC EDA Skills"
+  short_description: "MIMIC-IV 本地数据预处理、清洗与质量报告生成"
+  default_prompt: "Use $mimic-eda-skills to preprocess local MIMIC-IV csv data and generate a data quality report."

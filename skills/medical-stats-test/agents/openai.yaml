@@ -1,0 +1,4 @@
+interface:
+  display_name: "医学统计检验"
+  short_description: "支持临床研究统计检验、前后校验、执行与结果解读流程"
+  default_prompt: "Use $medical-stats-test to validate a clinical research idea against a cleaned dataset."

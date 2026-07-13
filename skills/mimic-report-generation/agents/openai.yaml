@@ -1,0 +1,4 @@
+interface:
+  display_name: "MIMIC Report Generation"
+  short_description: "MIMIC-IV 临床研究论文、复现报告与图表生成工具"
+  default_prompt: "Use $mimic-report-generation to generate an IMRAD clinical manuscript from MIMIC-IV analysis outputs."

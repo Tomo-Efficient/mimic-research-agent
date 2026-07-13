@@ -1,0 +1,66 @@
+itemid,label,fluid,category,kept_rows
+50820,pH,Blood,Blood Gas,47254
+50821,pO2,Blood,Blood Gas,45631
+50818,pCO2,Blood,Blood Gas,45584
+50802,Base Excess,Blood,Blood Gas,45581
+50804,Calculated Total CO2,Blood,Blood Gas,45580
+50813,Lactate,Blood,Blood Gas,41849
+50971,Potassium,Blood,Chemistry,40947
+50983,Sodium,Blood,Chemistry,40819
+50902,Chloride,Blood,Chemistry,40676
+50882,Bicarbonate,Blood,Chemistry,40255
+50912,Creatinine,Blood,Chemistry,40191
+50868,Anion Gap,Blood,Chemistry,40106
+51006,Urea Nitrogen,Blood,Chemistry,40071
+51221,Hematocrit,Blood,Hematology,39866
+50931,Glucose,Blood,Chemistry,39788
+50960,Magnesium,Blood,Chemistry,38927
+50970,Phosphate,Blood,Chemistry,38341
+51265,Platelet Count,Blood,Hematology,38214
+50893,"Calcium, Total",Blood,Chemistry,38178
+51222,Hemoglobin,Blood,Hematology,38029
+51301,White Blood Cells,Blood,Hematology,37672
+51279,Red Blood Cells,Blood,Hematology,37655
+51250,MCV,Blood,Hematology,37654
+51249,MCHC,Blood,Hematology,37652
+51248,MCH,Blood,Hematology,37646
+51277,RDW,Blood,Hematology,37600
+51275,PTT,Blood,Hematology,28641
+51274,PT,Blood,Hematology,27717
+51237,INR(PT),Blood,Hematology,27693
+52172,RDW-SD,Blood,Hematology,24136
+50808,Free Calcium,Blood,Blood Gas,19274
+50878,Asparate Aminotransferase (AST),Blood,Chemistry,18203
+50885,"Bilirubin, Total",Blood,Chemistry,18192
+50863,Alkaline Phosphatase,Blood,Chemistry,17972
+50861,Alanine Aminotransferase (ALT),Blood,Chemistry,17962
+50817,Oxygen Saturation,Blood,Blood Gas,13359
+50954,Lactate Dehydrogenase (LD),Blood,Chemistry,10773
+50809,Glucose,Blood,Blood Gas,10163
+51146,Basophils,Blood,Hematology,9804
+51244,Lymphocytes,Blood,Hematology,9804
+51254,Monocytes,Blood,Hematology,9804
+51256,Neutrophils,Blood,Hematology,9804
+51200,Eosinophils,Blood,Hematology,9802
+50862,Albumin,Blood,Chemistry,9338
+51003,Troponin T,Blood,Chemistry,9306
+50911,"Creatine Kinase, MB Isoenzyme",Blood,Chemistry,8857
+51214,"Fibrinogen, Functional",Blood,Hematology,7484
+50910,Creatine Kinase (CK),Blood,Chemistry,7262
+52075,Absolute Neutrophil Count,Blood,Hematology,5438
+51133,Absolute Lymphocyte Count,Blood,Hematology,5437
+52069,Absolute Basophil Count,Blood,Hematology,5437
+52073,Absolute Eosinophil Count,Blood,Hematology,5437
+52074,Absolute Monocyte Count,Blood,Hematology,5437
+50811,Hemoglobin,Blood,Blood Gas,4937
+50810,"Hematocrit, Calculated",Blood,Blood Gas,4936
+51144,Bands,Blood,Hematology,4517
+52135,Immature Granulocytes,Blood,Hematology,2757
+50908,CK-MB Index,Blood,Chemistry,1932
+50883,"Bilirubin, Direct",Blood,Chemistry,1481
+50884,"Bilirubin, Indirect",Blood,Chemistry,1325
+50889,C-Reactive Protein,Blood,Chemistry,714
+51196,D-Dimer,Blood,Hematology,472
+50915,D-Dimer,Blood,Chemistry,188
+52769,Absolute Lymphocyte Count,Blood,Hematology,84
+51652,High-Sensitivity CRP,Blood,Chemistry,2
