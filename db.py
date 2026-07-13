@@ -19,7 +19,11 @@ _redis_ok = False
 if REDIS_URL:
     try:
         import redis as _redis_lib
-        _redis = _redis_lib.from_url(REDIS_URL, socket_timeout=5, socket_connect_timeout=5)
+        opts = {"socket_timeout": 5, "socket_connect_timeout": 5}
+        if REDIS_URL.startswith("rediss://"):
+            opts["ssl"] = True
+            opts["ssl_cert_reqs"] = None
+        _redis = _redis_lib.from_url(REDIS_URL, **opts)
         _redis.ping()
         _redis_ok = True
         print("[db] Redis connected — persistent cache enabled")
